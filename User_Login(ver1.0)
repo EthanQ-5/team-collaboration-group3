@@ -1,0 +1,153 @@
+''''
+Library Management System (LSM) User Login Module
+This module provides the login function for user management in the Library Management System (LSM).
+
+Developer:
+Queñano, Ethan Cielo Luc V.
+BS CpE 1-5
+Group 3
+
+Program Date:
+June 10, 2025
+'''
+
+# Import necessary libraries for database management and ORM
+import sqlalchemy as sa
+from sqlalchemy import Column, Integer, String, create_engine
+from sqlalchemy.orm import declarative_base, sessionmaker
+
+# mysql database URL format:
+# mysql_db_url = "mysql://<username>:<password>@<hostame>:<port>/<database>"
+
+userDB_url = "mysql+pymysql://root:00P_1-5qU3!@localhost:3306/lsm_db"
+
+engine = create_engine(userDB_url)
+
+Base = declarative_base()
+
+
+class User(Base):
+    # Class for ORM allowing database management through object oriented programming techniques
+    # ORM for user_database table
+    __tablename__ = "user_database"
+
+    username = Column(String)
+    studentID = Column(String, primary_key=True)  # Assuming studentID is unique
+    firstname = Column(String)
+    surname = Column(String)
+    pup_webmail = Column(String)
+    password = Column(String)
+    level = Column(String)  # e.g., 'member', 'admin'
+
+
+def signup(uname, student_id, fname, sname, pupWebmail, pword):
+    # Function to create a new user account in the database
+    Session = sessionmaker(bind=engine)
+
+    # Create a new session
+    session = Session()
+
+    # Create a new user instance 
+    user = User(username=uname, studentID=student_id , firstname=fname, surname=sname, pup_webmail=pupWebmail, password=pword, level="member")
+
+    # Add the user to the session
+    session.add(user)
+
+    # Commit the session to save the user to the database
+    session.commit()
+
+
+def signin(student_id, pword):
+    # Function to login to user account
+    Session = sessionmaker(bind=engine)
+
+    # Create a new session
+    session = Session()
+
+    # Query the database for the user with the given studentID and password
+    user = session.query(User).filter_by(studentID=student_id).one_or_none()
+
+    # Check if user exists and password matches
+    # If user is None, it means no user was found with the given studentID
+    # If user is not None, we check if the password matches
+    if user is None:
+        print("Invalid student ID or password.")
+        return
+    if user.password == pword:
+        print("Login successful!")
+        print(f"Student ID: {user.studentID}\n Username: {user.username}\nName: {user.firstname} {user.surname}\nPUP Webmail: {user.pup_webmail}\nLevel: {user.level}")
+    else:
+        print("Invalid student ID or password.")
+
+
+def userlogin():
+    # Main Function to login to user account
+    # Program loop for user management system
+    while True:
+        print("\nWelcome to the LSM User Management System \nPlease choose an option:")
+        print("1. Sign Up")
+        print("2. Sign In")
+        print("3. Exit")
+        choice = input("Choose an option: ")
+
+        if choice == '1':
+            uname = input("Enter username: ")
+            student_id = input("Enter student ID: ")
+            fname = input("Enter first name: ")
+            sname = input("Enter surname: ")
+            pupWebmail = input("Enter PUP Webmail: ")
+            pword = input("Enter password: ")
+
+            while True:
+                # Validate password requirements
+                if len(pword) < 8:
+                    print("Password must be at least 8 characters long.")
+                    pword = input("Enter password: ")
+                    continue
+                elif not any(char.isdigit() for char in pword):
+                    print("Password must contain at least one digit.")
+                    pword = input("Enter password: ")
+                    continue
+                elif not any(char.isupper() for char in pword):
+                    print("Password must contain at least one uppercase letter.")
+                    pword = input("Enter password: ")
+                    continue
+                elif not any(char.islower() for char in pword):
+                    print("Password must contain at least one lowercase letter.")
+                    pword = input("Enter password: ")
+                    continue
+                else:
+                    break
+
+            while True:
+                # Confirm password
+                confirm_pword = input("Confirm password: ")
+                if pword != confirm_pword:
+                    print("Passwords do not match. Please try again.")
+                    continue
+                else:
+                    print("Passwords match. You may proceed.")
+                    break
+
+            # Call the signup function with the provided details
+            signup(uname, student_id, fname, sname, pupWebmail, pword)
+            print("Sign up successful! You can now sign in.")
+
+        elif choice == '2':
+            student_id = input("Enter student ID: ")
+            pword = input("Enter password: ")
+            # Call the signin function with the provided credentials
+            signin(student_id, pword)
+
+        elif choice == '3':
+            print("Exiting the User Management System. Goodbye!")
+            break
+
+        else:
+            print("Invalid choice, please try again.") # Error handling for invalid input
+            continue
+
+
+# Run main function if this script is executed directly
+if __name__ == "__main__":
+    userlogin()
